@@ -47,6 +47,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import com.example.gestiondearriendos.data.local.Reserva
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,13 +137,14 @@ private fun DialogoHora(onConfirmar: (String) -> Unit, onCancelar: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FormularioReservaScreen(viewModel: ReservaViewModel, onVolver: () -> Unit) {
+fun FormularioReservaScreen(    viewModel: ReservaViewModel,onVolver: () -> Unit, reservaEditar: Reserva? = null) {
 
-    var nombre by remember { mutableStateOf("") }
-    var fecha by remember { mutableStateOf("") }
-    var horaInicio by remember { mutableStateOf("") }
-    var horaFin by remember { mutableStateOf("") }
-    var motivo by remember { mutableStateOf("") }
+    val editando = reservaEditar != null
+    var nombre by remember { mutableStateOf(reservaEditar?.nombreVecino ?: "") }
+    var fecha by remember { mutableStateOf(reservaEditar?.fecha ?: "") }
+    var horaInicio by remember { mutableStateOf(reservaEditar?.horaInicio ?: "") }
+    var horaFin by remember { mutableStateOf(reservaEditar?.horaFin ?: "") }
+    var motivo by remember { mutableStateOf(reservaEditar?.motivo ?: "") }
 
     var mostrarFecha by remember { mutableStateOf(false) }
     var mostrarHoraInicio by remember { mutableStateOf(false) }
@@ -153,7 +155,7 @@ fun FormularioReservaScreen(viewModel: ReservaViewModel, onVolver: () -> Unit) {
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
-            if (it == "Solicitud enviada") {
+            if (it == "Solicitud enviada" || it == "Reserva actualizada") {
                 viewModel.limpiarMensaje()
                 onVolver()
             } else {
@@ -185,7 +187,7 @@ fun FormularioReservaScreen(viewModel: ReservaViewModel, onVolver: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nueva reserva") },
+                title = { Text(if (editando) "Editar reserva" else "Nueva reserva") },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
@@ -238,11 +240,15 @@ fun FormularioReservaScreen(viewModel: ReservaViewModel, onVolver: () -> Unit) {
             Spacer(Modifier.height(24.dp))
             Button(
                 onClick = {
-                    viewModel.solicitarReserva(nombre, fecha, horaInicio, horaFin, motivo)
+                    if (reservaEditar != null) {
+                        viewModel.editarReserva(reservaEditar, nombre, fecha, horaInicio, horaFin, motivo)
+                    } else {
+                        viewModel.solicitarReserva(nombre, fecha, horaInicio, horaFin, motivo)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Solicitar reserva")
+                Text(if (editando) "Guardar cambios" else "Solicitar reserva")
             }
         }
     }

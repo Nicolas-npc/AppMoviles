@@ -18,4 +18,8 @@ class FianzasRepository (
     suspend fun registrarPago(pago: Pago)= pagoDao.insertar(pago)
 
     suspend fun registrarGasto(gastos: Gastos) = gastoDao.insertar(gastos)
+
+    suspend fun  eliminarPago(pago: Pago) = pagoDao.eliminar(pago)
+
+    suspend fun  eliminarGasto(gastos: Gastos) = gastoDao.eliminar(gastos)
 }

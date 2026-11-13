@@ -22,22 +22,27 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.gestiondearriendos.Model.EstadoReserva
 import com.example.gestiondearriendos.data.local.Reserva
+import com.example.gestiondearriendos.ui.components.DialogoConfirmacion
 import com.example.gestiondearriendos.viewmodel.ReservaViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ListaReservasScreen(viewModel: ReservaViewModel, puedeGestionar: Boolean,idsPagados: Set<Int>, onNuevaReserva: () -> Unit){
+fun ListaReservasScreen(viewModel: ReservaViewModel, puedeGestionar: Boolean,idsPagados: Set<Int>, onNuevaReserva: () -> Unit,onEditar: (Int) -> Unit){
 
     val reservas by viewModel.reservas.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
@@ -85,7 +90,9 @@ fun ListaReservasScreen(viewModel: ReservaViewModel, puedeGestionar: Boolean,ids
                         puedeGestionar = puedeGestionar,
                         pagada = reserva.id in idsPagados,
                         onConfirmar = { viewModel.confirmarReserva(reserva) },
-                        onRechazar = { viewModel.rechazarReserva(reserva) }
+                        onRechazar = { viewModel.rechazarReserva(reserva) } ,
+                        onEliminar = { viewModel.eliminarReserva(reserva) },
+                        onEditar = { onEditar(reserva.id) }
                     )
                 }
             }
@@ -93,21 +100,24 @@ fun ListaReservasScreen(viewModel: ReservaViewModel, puedeGestionar: Boolean,ids
     }
 }
 @Composable
-fun ReservaCard(reserva: Reserva,puedeGestionar: Boolean,pagada: Boolean, onConfirmar: () -> Unit, onRechazar:()-> Unit){
+fun ReservaCard(reserva: Reserva,puedeGestionar: Boolean,pagada: Boolean, onConfirmar: () -> Unit, onRechazar:()-> Unit,onEliminar: () -> Unit,onEditar: (Int) -> Unit){
+
+    var confirmarEliminar by remember { mutableStateOf(false) }
+
     Card (modifier = Modifier.fillMaxWidth()){
         Column (modifier = Modifier.padding(16.dp)){
             Text(reserva.nombreVecino, style = MaterialTheme.typography.titleMedium)
             Text("${reserva.fecha}  ·  ${reserva.horaInicio} a ${reserva.horaFin}")
             Text("Motivo: ${reserva.motivo}")
-            Text("Estado: ${reserva.estado}", style = MaterialTheme.typography.labelLarge)
-                if (reserva.estado == "CONFIRMADA") {
+            Text("Estado: ${reserva.estado.etiqueta}", style = MaterialTheme.typography.labelLarge)
+            if (reserva.estado == EstadoReserva.CONFIRMADA) {
                     Text(
                         if (pagada) "Pago: Pagada" else "Pago: Pendiente de pago",
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
 
-            if (reserva.estado == "PENDIENTE"&& puedeGestionar){
+            if (reserva.estado == EstadoReserva.PENDIENTE && puedeGestionar) {
                 Row (
                     modifier = Modifier
                         .fillMaxWidth()
@@ -117,6 +127,21 @@ fun ReservaCard(reserva: Reserva,puedeGestionar: Boolean,pagada: Boolean, onConf
                     Button(onClick = onConfirmar){Text("Confirmar")}
                     OutlinedButton(onClick = onRechazar) {Text("Rechazar") }
                 }
+            }
+            if (puedeGestionar && !pagada) {
+                Row {
+                    if (reserva.estado != EstadoReserva.RECHAZADA) {
+                        TextButton(onClick = onEditar) { Text("Editar") }
+                    }
+                    TextButton(onClick = { confirmarEliminar = true }) { Text("Eliminar") }
+                }            }
+            if (confirmarEliminar) {
+                DialogoConfirmacion(
+                    titulo = "Eliminar reserva",
+                    texto = "¿Eliminar la reserva de ${reserva.nombreVecino} del ${reserva.fecha}?",
+                    onConfirmar = { confirmarEliminar = false; onEliminar() },
+                    onCancelar = { confirmarEliminar = false }
+                )
             }
         }
     }

@@ -27,12 +27,15 @@ interface ReservaDao {
 
     @Query(
         """
-        SELECT COUNT(*) FROM reservas
-        WHERE fecha = :fecha
-        AND estado = 'CONFIRMADA'
-        AND horaInicio < :horaFin
-        AND horaFin > :horaInicio
-        """
-    )suspend fun contarCruces(fecha: String, horaInicio: String, horaFin : String): Int
+    SELECT COUNT(*) FROM reservas
+    WHERE id != :id
+    AND fecha = :fecha
+    AND estado = 'CONFIRMADA'
+    AND horaInicio < :horaFin
+    AND horaFin > :horaInicio
+    """
+    )
+    suspend fun contarCruces(fecha: String, horaInicio: String, horaFin : String): Int
+    suspend fun contarCrucesExcluyendo(id : Int,fecha: String, horaInicio: String, horaFin : String): Int
 
 }

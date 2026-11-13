@@ -17,4 +17,8 @@ class ReservaRepository (private val dao: ReservaDao) {
     suspend fun hayCruce(fecha: String, horaInicio: String,horaFin: String): Boolean{
         return dao.contarCruces(fecha,horaInicio,horaFin) > 0
     }
+
+    suspend fun hayCruceExcluyendo(id:Int,fecha: String,horaInicio: String,horaFin: String): Boolean{
+        return dao.contarCrucesExcluyendo(id,fecha,horaInicio,horaFin) > 0
+    }
 }

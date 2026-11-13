@@ -1,6 +1,7 @@
 package com.example.gestiondearriendos.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -14,6 +15,9 @@ import com.example.gestiondearriendos.viewmodel.FinanzasViewModel
 import com.example.gestiondearriendos.viewmodel.ReservaViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.example.gestiondearriendos.Model.EstadoReserva
+import com.example.gestiondearriendos.Model.Rol
+
 @Composable
 fun AppNavigation (reservaViewModel: ReservaViewModel, finanzasViewModel: FinanzasViewModel){
 
@@ -25,11 +29,11 @@ fun AppNavigation (reservaViewModel: ReservaViewModel, finanzasViewModel: Finanz
     NavHost(navController = navController, startDestination = "roles") {
 
         composable("roles") {
-            SeleccionRolScreen(onRol = { rol -> navController.navigate("inicio/$rol") })
+            SeleccionRolScreen(onRol = { rol -> navController.navigate("inicio/${rol.name}") })
         }
 
         composable("inicio/{rol}") { entrada ->
-            val rol = entrada.arguments?.getString("rol") ?: "VECINO"
+            val rol = Rol.desdeTexto(entrada.arguments?.getString("rol"))
             InicioScreen(
                 rol = rol,
                 onNavegar = { ruta -> navController.navigate(ruta) },
@@ -38,12 +42,13 @@ fun AppNavigation (reservaViewModel: ReservaViewModel, finanzasViewModel: Finanz
         }
 
         composable("lista/{rol}") { entrada ->
-            val rol = entrada.arguments?.getString("rol") ?: "VECINO"
+            val rol =  Rol.desdeTexto(entrada.arguments?.getString("rol"))
             ListaReservasScreen(
                 viewModel = reservaViewModel,
-                puedeGestionar = rol == "SECRETARIA",
+                puedeGestionar = rol == Rol.SECRETARIA,
                 idsPagados = idsPagados,
-                onNuevaReserva = {navController.navigate("formulario")}
+                onNuevaReserva = {navController.navigate("formulario")},
+                onEditar = { id -> navController.navigate("editar/$id") }
             )
         }
 
@@ -54,14 +59,27 @@ fun AppNavigation (reservaViewModel: ReservaViewModel, finanzasViewModel: Finanz
             )
         }
 
+        composable("editar/{id}") { entrada ->
+            val id = entrada.arguments?.getString("id")?.toIntOrNull()
+            val reserva = reservas.firstOrNull { it.id == id }
+            if (reserva == null) {
+                LaunchedEffect(Unit) { navController.popBackStack() }
+            } else {
+                FormularioReservaScreen(
+                    viewModel = reservaViewModel,
+                    onVolver = { navController.popBackStack() },
+                    reservaEditar = reserva
+                )
+            }
+        }
+
         composable("pago") {
             FormularioMovimientoScreen(
                 esPago = true,
                 viewModel = finanzasViewModel,
                 onVoler = { navController.popBackStack() },
                 reservasPorCobrar = reservas.filter{
-                    it.estado == "CONFIRMADA" && it.id  !in idsPagados
-                }
+                    it.estado == EstadoReserva.CONFIRMADA && it.id !in idsPagados                }
             )
         }
 
@@ -73,9 +91,11 @@ fun AppNavigation (reservaViewModel: ReservaViewModel, finanzasViewModel: Finanz
             )
         }
 
-        composable("transparencia") {
+        composable("transparencia/{rol}") {entrada ->
+            val rol= Rol.desdeTexto(entrada.arguments?.getString("rol"))
             TransparenciaScreen(
                 viewModel = finanzasViewModel,
+                puedeEliminar = rol == Rol.TESORERIA,
                 onVolver = { navController.popBackStack() }
             )
         }

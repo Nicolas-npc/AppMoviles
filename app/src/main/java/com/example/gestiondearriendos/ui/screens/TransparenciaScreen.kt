@@ -16,26 +16,65 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.gestiondearriendos.viewmodel.FinanzasViewModel
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.setValue
+import com.example.gestiondearriendos.data.local.Gastos
+import com.example.gestiondearriendos.data.local.Pago
+import com.example.gestiondearriendos.ui.components.DialogoConfirmacion
 
 private fun  pesos (monto: Int ): String = "$" + monto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun  TransparenciaScreen (viewModel: FinanzasViewModel, onVolver: () -> Unit){
+fun  TransparenciaScreen (viewModel: FinanzasViewModel, puedeEliminar: Boolean, onVolver: () -> Unit){
 
     val ingresos by viewModel.totalIngresos.collectAsState()
     val totalGastos by viewModel.totalGastos.collectAsState()
     val saldo by viewModel.saldo.collectAsState()
     val pagos by viewModel.pagos.collectAsState()
     val gastos by viewModel.gastos.collectAsState()
+
+    val mensaje by viewModel.mensaje.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pagoAEliminar by remember { mutableStateOf<Pago?>(null) }
+    var gastoAEliminar by remember { mutableStateOf<Gastos?>(null) }
+
+    LaunchedEffect(mensaje) {
+        mensaje?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.limpiarMensaje()
+        }
+    }
+
+    pagoAEliminar?.let { pago ->
+        DialogoConfirmacion(
+            titulo = "Eliminar pago",
+            texto = "¿Eliminar \"${pago.concepto}\" por ${pesos(pago.monto)}?",
+            onConfirmar = { viewModel.eliminarPago(pago); pagoAEliminar = null },
+            onCancelar = { pagoAEliminar = null }
+        )
+    }
+    gastoAEliminar?.let { gasto ->
+        DialogoConfirmacion(
+            titulo = "Eliminar gasto",
+            texto = "¿Eliminar \"${gasto.concepto}\" por ${pesos(gasto.monto)}?",
+            onConfirmar = { viewModel.eliminarGasto(gasto); gastoAEliminar = null },
+            onCancelar = { gastoAEliminar = null }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -47,7 +86,8 @@ fun  TransparenciaScreen (viewModel: FinanzasViewModel, onVolver: () -> Unit){
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ){padding ->
         LazyColumn(
             modifier = Modifier
@@ -76,6 +116,9 @@ fun  TransparenciaScreen (viewModel: FinanzasViewModel, onVolver: () -> Unit){
                         Text(pago.concepto)
                         Text("${pago.fecha}  ·  ${pesos(pago.monto)}")
                     }
+                    if (puedeEliminar) {
+                        TextButton(onClick = { pagoAEliminar = pago }) { Text("Eliminar") }
+                    }
                 }
             }
             item { Text("Gastos", style = MaterialTheme.typography.titleMedium) }
@@ -88,6 +131,9 @@ fun  TransparenciaScreen (viewModel: FinanzasViewModel, onVolver: () -> Unit){
                         Text(gasto.concepto)
                         Text("${gasto.fecha}  ·  ${pesos(gasto.monto)}")
                     }
+                }
+                if (puedeEliminar) {
+                    TextButton(onClick = { gastoAEliminar = gasto }) { Text("Eliminar") }
                 }
             }
         }

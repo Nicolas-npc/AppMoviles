@@ -10,12 +10,15 @@ import com.example.gestiondearriendos.data.repository.FianzasRepository
 import com.example.gestiondearriendos.util.CalcularFinanzas
 import com.example.gestiondearriendos.util.NotificacionUtil
 import com.example.gestiondearriendos.util.ValidadorMovimiento
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class FinanzasViewModel(application: Application): AndroidViewModel(application){
 
@@ -94,6 +97,29 @@ class FinanzasViewModel(application: Application): AndroidViewModel(application)
             _mensaje.value = "Gasto registrado"
         }
     }
+
+    fun eliminarPago(pago: Pago){
+
+        viewModelScope.launch {
+            repository.eliminarPago(pago)
+            pago.rutaComprobante?.let { ruta ->
+                withContext(Dispatchers.IO){ File(ruta).delete() }
+            }
+            _mensaje.value = "Pago eliminado"
+        }
+
+    }
+
+    fun eliminarGasto(gastos: Gastos){
+
+        viewModelScope.launch {
+            repository.eliminarGasto(gastos)
+            gastos.rutaBoleta?.let { ruta ->
+                withContext(Dispatchers.IO){ File(ruta).delete() }
+            }
+        }
+    }
+
 
     fun  limpiarMensaje(){
         _mensaje.value = null
