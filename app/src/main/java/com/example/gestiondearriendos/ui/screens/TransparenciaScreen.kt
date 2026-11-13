@@ -1,0 +1,95 @@
+package com.example.gestiondearriendos.ui.screens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.gestiondearriendos.viewmodel.FinanzasViewModel
+
+private fun  pesos (monto: Int ): String = "$" + monto
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun  TransparenciaScreen (viewModel: FinanzasViewModel, onVolver: () -> Unit){
+
+    val ingresos by viewModel.totalIngresos.collectAsState()
+    val totalGastos by viewModel.totalGastos.collectAsState()
+    val saldo by viewModel.saldo.collectAsState()
+    val pagos by viewModel.pagos.collectAsState()
+    val gastos by viewModel.gastos.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Transparencia financiera") },
+                navigationIcon = {
+                    IconButton(onClick = onVolver) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                }
+            )
+        }
+    ){padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ){
+            item{
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Resumen", style = MaterialTheme.typography.titleMedium)
+                        Text("Ingresos: ${pesos(ingresos)}")
+                        Text("Gastos: ${pesos(totalGastos)}")
+                        Text("Saldo: ${pesos(saldo)}", style = MaterialTheme.typography.titleLarge)
+                    }
+                }
+            }
+            item{Text("Ingresos", style = MaterialTheme.typography.titleMedium)}
+            if (pagos.isEmpty()){
+                item { Text("sin ingresos registrados") }
+            }
+            items(pagos, key = {"pago-${it.id}"}){pago ->
+                Card( modifier = Modifier.fillMaxWidth()){
+                    Column(modifier = Modifier.padding(12.dp)){
+                        Text(pago.concepto)
+                        Text("${pago.fecha}  ·  ${pesos(pago.monto)}")
+                    }
+                }
+            }
+            item { Text("Gastos", style = MaterialTheme.typography.titleMedium) }
+            if (gastos.isEmpty()){
+                item { Text("Sin gastos registrados") }
+            }
+            items(gastos, key ={"gasto-${it.id}"}){gasto ->
+                Card(modifier = Modifier.fillMaxWidth()){
+                    Column(modifier = Modifier.padding(12.dp)){
+                        Text(gasto.concepto)
+                        Text("${gasto.fecha}  ·  ${pesos(gasto.monto)}")
+                    }
+                }
+            }
+        }
+    }
+}
