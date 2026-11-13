@@ -16,6 +16,10 @@ object NotificacionUtil {
     private const val CANAL_ID = "canal_junta_vecinos"
 
     fun crearCanal(context: Context) {
+        // NotificationChannel solo existe desde Android 8 (API 26).
+        // Como minSdk = 24, sin este "if" la app se caía en Android 7.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
         val canal = NotificationChannel(
             CANAL_ID,
             "Avisos de la Junta de Vecinos",
@@ -37,6 +41,7 @@ object NotificacionUtil {
 
         val notificacion = NotificationCompat.Builder(context, CANAL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setColor(0xFF2F4F3A.toInt()) // verde bosque
             .setContentTitle(titulo)
             .setContentText(texto)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

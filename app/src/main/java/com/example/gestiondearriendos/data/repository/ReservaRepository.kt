@@ -8,6 +8,8 @@ class ReservaRepository (private val dao: ReservaDao) {
 
     val reservas: Flow<List<Reserva>> = dao.obtenerTodas()
 
+    suspend fun obtenerPorId(id: Int): Reserva? = dao.obtenerPorId(id)
+
     suspend fun insertar(reserva: Reserva) = dao.insertar(reserva)
 
     suspend fun  actualizar(reserva: Reserva) = dao.actualizar(reserva)

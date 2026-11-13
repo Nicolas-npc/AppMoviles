@@ -8,6 +8,7 @@ import com.example.gestiondearriendos.data.local.Gastos
 import com.example.gestiondearriendos.data.local.Pago
 import com.example.gestiondearriendos.data.repository.FianzasRepository
 import com.example.gestiondearriendos.util.CalcularFinanzas
+import com.example.gestiondearriendos.util.FormatoUtil
 import com.example.gestiondearriendos.util.NotificacionUtil
 import com.example.gestiondearriendos.util.ValidadorMovimiento
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +60,7 @@ class FinanzasViewModel(application: Application): AndroidViewModel(application)
             repository.registrarPago(
                 Pago(
                     reservaId = reservaId,
-                    concepto = concepto,
+                    concepto = concepto.trim(),
                     monto  = montoTexto.toInt(),
                     fecha = fecha,
                     rutaComprobante = rutaComprobante
@@ -68,7 +69,7 @@ class FinanzasViewModel(application: Application): AndroidViewModel(application)
             NotificacionUtil.mostrar(
                 contexto,
                 "Pago registrado",
-                "Se registró el pago de $concepto por \$$montoTexto"
+                "Se registró el pago de $concepto por ${FormatoUtil.pesos(montoTexto.toInt())}"
             )
             _mensaje.value = "Pago registrado"
         }
@@ -88,7 +89,7 @@ class FinanzasViewModel(application: Application): AndroidViewModel(application)
         viewModelScope.launch {
             repository.registrarGasto(
                 Gastos(
-                    concepto = concepto,
+                    concepto = concepto.trim(),
                     monto =  montoTexto.toInt(),
                     fecha =  fecha,
                     rutaBoleta = rutaBoleta
@@ -117,6 +118,7 @@ class FinanzasViewModel(application: Application): AndroidViewModel(application)
             gastos.rutaBoleta?.let { ruta ->
                 withContext(Dispatchers.IO){ File(ruta).delete() }
             }
+            _mensaje.value = "Gasto eliminado"
         }
     }
 

@@ -12,7 +12,6 @@ import com.example.gestiondearriendos.util.ValidadorReserva
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -42,11 +41,11 @@ class ReservaViewModel (application: Application) : AndroidViewModel(application
             }else{
                 repository.insertar(
                     Reserva(
-                        nombreVecino = nombre,
+                        nombreVecino = nombre.trim(),
                         fecha = fecha,
                         horaInicio = horaInicio,
                         horaFin = horaFin,
-                        motivo = motivo
+                        motivo = motivo.trim()
                     )
                 )
                 _mensaje.value = "Solicitud enviada"
@@ -54,9 +53,13 @@ class ReservaViewModel (application: Application) : AndroidViewModel(application
         }
     }
 
+    /** Usado por la pantalla de edición para cargar los datos de la reserva. */
+    suspend fun obtenerReserva(id: Int): Reserva? = repository.obtenerPorId(id)
+
     fun confirmarReserva(reserva: Reserva){
         viewModelScope.launch {
-            if (repository.hayCruce(reserva.fecha,reserva.horaInicio, reserva.horaFin)){
+            // Se excluye la propia reserva para que no "choque consigo misma".
+            if (repository.hayCruceExcluyendo(reserva.id, reserva.fecha, reserva.horaInicio, reserva.horaFin)){
                 _mensaje.value = "No se puede confirmar: se cruza con otra reserva"
             }else{
                 repository.actualizar(reserva.copy(estado = EstadoReserva.CONFIRMADA))
@@ -105,11 +108,11 @@ class ReservaViewModel (application: Application) : AndroidViewModel(application
             } else {
                 repository.actualizar(
                     reserva.copy(
-                        nombreVecino = nombre,
+                        nombreVecino = nombre.trim(),
                         fecha = fecha,
                         horaInicio = horaInicio,
                         horaFin = horaFin,
-                        motivo = motivo
+                        motivo = motivo.trim()
                     )
                 )
                 _mensaje.value = "Reserva actualizada"

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.GestionDeArriendos" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Fondo beige mientras carga la app (evita el "flash" blanco al abrirla) -->
+    <style name="Theme.GestionDeArriendos" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/beige_fondo</item>
+    </style>
 </resources>
